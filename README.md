@@ -3,8 +3,8 @@
 
 # Integrantes:
 # -Hurtado Rico Omar
+# -Mejia Reyes Araceli Guadalupe
 # -Olvera Cruz Carlos
 # -Pucheta Ruiz Alexander
-# -Mejia Reyes Araceli Guadalupe
 # -Rodriguez Gomez Veronica
 # -Saavedra Espino Francisco Gabriel
