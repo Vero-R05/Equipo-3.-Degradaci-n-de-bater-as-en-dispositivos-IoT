@@ -66,10 +66,10 @@ plt.subplot(1, 2, 1)
 for T in temperaturas_C:
     datos_temp = df[df['Temperatura_C'] == T]
     plt.plot(datos_temp['Ciclo'], datos_temp['SOH'], label=f'{T}°C', alpha=0.7)
-plt.axhline(y=80, color='red', linestyle='--', linewidth=2, label='Límite Crítico (80%)')
-plt.title('Degradación del SOH por Temperatura')
-plt.xlabel('Número de Ciclos')
-plt.ylabel('Estado de Salud SOH (%)')
+plt.axhline(y=80, color='red', linestyle='--', linewidth=2, label='Critical Limit (80%)')
+plt.title('SOH Degradation Due to Temperature')
+plt.xlabel('Number of Cycles')
+plt.ylabel('Health Status SOH (%)')
 plt.legend()
 plt.grid(True)
 
@@ -77,10 +77,10 @@ plt.grid(True)
 plt.subplot(1, 2, 2)
 plt.scatter(y_test, predicciones, alpha=0.5, color='blue')
 # Línea ideal perfecta
-plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--', lw=2, label='Predicción Perfecta')
-plt.title('Comparativa: Datos Simulados vs Predicción IA')
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--', lw=2, label='Perfect Prediction')
+plt.title('Comparison: Simulated Data vs. AI Prediction')
 plt.xlabel('SOH Real (%)')
-plt.ylabel('SOH Predicho por IA (%)')
+plt.ylabel('SOH Predicted by AI (%)')
 plt.legend()
 plt.grid(True)
 
