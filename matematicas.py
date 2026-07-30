@@ -148,9 +148,9 @@ colors = ['blue', 'orange', 'red']
 for i, T in enumerate(temperaturas):
     plt.plot(resultados[T]['N'], resultados[T]['V'], 
              color=colors[i], linewidth=2, label=f'{T}°C')
-plt.title('Degradacion del voltaje por temperatura')
-plt.xlabel('Numero de ciclos')
-plt.ylabel('Voltaje (V)')
+plt.title('Voltage degradation to temperature')
+plt.xlabel('Number of cycles')
+plt.ylabel('Voltage (V)')
 plt.legend()
 plt.grid(True)
 
@@ -160,9 +160,9 @@ for i, T in enumerate(temperaturas):
     SOH = (resultados[T]['V'] / V0) * 100
     plt.plot(resultados[T]['N'], SOH, 
              color=colors[i], linewidth=2, label=f'{T}°C')
-plt.axhline(y=80, color='red', linestyle='--', linewidth=2, label='Límite Crítico (80%)')
-plt.title('Estado de salud (SOH) por temperatura')
-plt.xlabel('Numero de ciclos')
+plt.axhline(y=80, color='red', linestyle='--', linewidth=2, label='Critical Limit (80%)')
+plt.title('State of Health  (SOH) for temperaturea')
+plt.xlabel('Number of cycles')
 plt.ylabel('SOH (%)')
 plt.legend()
 plt.grid(True)
@@ -173,9 +173,9 @@ for i, T in enumerate(temperaturas):
     degradacion = ((V0 - resultados[T]['V']) / V0) * 100
     plt.plot(resultados[T]['N'], degradacion, 
              color=colors[i], linewidth=2, label=f'{T}°C')
-plt.title('Degradacion porcentual por temperatura')
-plt.xlabel('Numero de ciclos')
-plt.ylabel('Degradacion (%)')
+plt.title('Percentage degradation to temperature')
+plt.xlabel('Number of cycles')
+plt.ylabel('Degradation (%)')
 plt.legend()
 plt.grid(True)
 
@@ -185,9 +185,9 @@ zoom = 50  # Mostrar primeros 50 ciclos
 for i, T in enumerate(temperaturas):
     plt.plot(resultados[T]['N'][:zoom], resultados[T]['V'][:zoom], 
              color=colors[i], linewidth=2, label=f'{T}°C')
-plt.title(f'Zoom - Primeros {zoom} Ciclos')
-plt.xlabel('Numero de ciclos')
-plt.ylabel('Voltaje (V)')
+plt.title(f'Zoom - First {zoom} Cycles')
+plt.xlabel('Number of cycles')
+plt.ylabel('Voltage (V)')
 plt.legend()
 plt.grid(True)
 
