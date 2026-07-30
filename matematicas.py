@@ -21,7 +21,7 @@ def f(N, V, T):
     return -k * T * V
 
 # ==========================================
-# 2. METODO APLICADO
+# METODO APLICADO
 
 def euler(f, N0, V0, h, n_pasos, T):
     """Método de Euler para resolver EDOs"""
@@ -37,7 +37,7 @@ def euler(f, N0, V0, h, n_pasos, T):
     return N, V
 
 # ==========================================
-# 3. RESOLVER PARA CADA TEMPERATURA
+# RESOLVER PARA CADA TEMPERATURA
 
 resultados = {}
 
@@ -52,7 +52,7 @@ for T in temperaturas:
     }
 
 # ==========================================
-# 4. GUARDAR EN EXCEL
+# GUARDAR EN EXCEL
 
 # Obtener la ruta donde está el script
 ruta_script = os.path.dirname(os.path.abspath(__file__))
@@ -120,7 +120,7 @@ print("Archivo excel creado en la carpeta del codigo")
 print(f"Ubicación: {ruta_script}")
 
 # ==========================================
-# 5. ESTADISTICAS 
+# ESTADISTICAS 
 
 print("\n" + "-" * 50)
 print("ESTADÍSTICAS DESCRIPTIVAS POR TEMPERATURA")
@@ -138,7 +138,7 @@ for T in temperaturas:
     print(f"  Degradacion total: {((V0 - V[-1]) / V0 * 100):.2f}%")
 
 # ==========================================
-# 6. GRÁFICAS
+# GRÁFICAS
 
 plt.figure(figsize=(15, 12))
 
@@ -195,7 +195,7 @@ plt.tight_layout()
 plt.show()
 
 # ==========================================
-# 7. ANÁLISIS DE PUNTOS CRÍTICOS
+# ANÁLISIS DE PUNTOS CRÍTICOS
 
 print("\n" + "-" * 50)
 print("ANALISIS DE PUNTOS CRITICOS (SOH = 80%)")
