@@ -84,7 +84,7 @@ with pd.ExcelWriter(ruta_completa, engine='openpyxl') as writer:
         'Temperatura (°C)': [],
         'Voltaje inicial (V)': [],
         'Voltaje final (V)': [],
-        'Degradacion Total (%)': [],
+        'Degradacion total (%)': [],
         'Ciclo critico (SOH<80%)': [],
         'SOH en ciclo crítico (%)': []
     }
