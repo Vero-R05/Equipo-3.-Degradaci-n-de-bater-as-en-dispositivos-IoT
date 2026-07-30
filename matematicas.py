@@ -1,31 +1,29 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
+import openpyxl
 
 # ==========================================
-# 1. DEFINICIÓN DEL PROBLEMA
-# ==========================================
+# DEFINICION PARAMETROS
 
-# Parámetros del modelo de batería
+# Parametros del modelo de bateria
 V0 = 4.2          # Voltaje inicial (V)
-k = 0.00035       # Constante de degradación
-T = 25            # Temperatura (°C)
+k = 0.00035       # Constante de degradacion
 ciclos_totales = 500
 h = 1             # Paso (1 ciclo)
 
-# Solución analítica (para comparar)
-def V_analitica(N):
-    return V0 * np.exp(-k * T * N)
+# Temperaturas a analizar
+temperaturas = [25, 40, 55]
 
 # EDO: dV/dN = -k*T*V
-def f(N, V):
+def f(N, V, T):
     return -k * T * V
 
 # ==========================================
-# 2. MÉTODO DE EULER
-# ==========================================
+# 2. METODO APLICADO
 
-def euler(f, N0, V0, h, n_pasos):
+def euler(f, N0, V0, h, n_pasos, T):
     """Método de Euler para resolver EDOs"""
     N = np.zeros(n_pasos + 1)
     V = np.zeros(n_pasos + 1)
@@ -34,112 +32,189 @@ def euler(f, N0, V0, h, n_pasos):
     
     for i in range(n_pasos):
         N[i+1] = N[i] + h
-        V[i+1] = V[i] + h * f(N[i], V[i])
+        V[i+1] = V[i] + h * f(N[i], V[i], T)
     
     return N, V
 
-# Resolver con Euler
-N_euler, V_euler = euler(f, 0, V0, h, ciclos_totales)
+# ==========================================
+# 3. RESOLVER PARA CADA TEMPERATURA
 
-# Solución analítica
-V_analitica_array = V_analitica(N_euler)
+resultados = {}
+
+for T in temperaturas:
+    # Resolver con Euler
+    N_euler, V_euler = euler(f, 0, V0, h, ciclos_totales, T)
+    
+    # Guardar resultados
+    resultados[T] = {
+        'N': N_euler,
+        'V': V_euler
+    }
 
 # ==========================================
-# 3. CÁLCULO DE ERRORES
+# 4. GUARDAR EN EXCEL
+
+# Obtener la ruta donde está el script
+ruta_script = os.path.dirname(os.path.abspath(__file__))
+
+# Nombre del archivo Excel
+nombre_archivo = 'resultados_euler_todas_temperaturas.xlsx'
+
+# Ruta completa donde se guardará
+ruta_completa = os.path.join(ruta_script, nombre_archivo)
+
+# Crear un escritor de Excel
+with pd.ExcelWriter(ruta_completa, engine='openpyxl') as writer:
+    
+    for T in temperaturas:
+        # Crear DataFrame para cada temperatura
+        df_temp = pd.DataFrame({
+            'Ciclo': resultados[T]['N'].astype(int),
+            f'Voltaje_{T}C': resultados[T]['V']
+        })
+        
+        # Añadir columna de SOH (State of Health)
+        df_temp['SOH_%'] = (df_temp[f'Voltaje_{T}C'] / V0) * 100
+        
+        # Guardar en una hoja separada
+        df_temp.to_excel(writer, sheet_name=f'{T}°C', index=False)
+    
+    # Crear una hoja de resumen
+    resumen_data = {
+        'Temperatura (°C)': [],
+        'Voltaje inicial (V)': [],
+        'Voltaje final (V)': [],
+        'Degradacion Total (%)': [],
+        'Ciclo critico (SOH<80%)': [],
+        'SOH en ciclo crítico (%)': []
+    }
+    
+    for T in temperaturas:
+        V_final = resultados[T]['V'][-1]
+        degradacion = ((V0 - V_final) / V0) * 100
+        
+        # Calcular ciclo crítico
+        SOH = (resultados[T]['V'] / V0) * 100
+        indices_criticos = np.where(SOH < 80)[0]
+        
+        if len(indices_criticos) > 0:
+            ciclo_critico = indices_criticos[0]
+            soh_critico = SOH[ciclo_critico]
+        else:
+            ciclo_critico = 'No alcanzado'
+            soh_critico = 'N/A'
+        
+        resumen_data['Temperatura (°C)'].append(T)
+        resumen_data['Voltaje inicial (V)'].append(V0)
+        resumen_data['Voltaje final (V)'].append(round(V_final, 6))
+        resumen_data['Degradacion total (%)'].append(round(degradacion, 2))
+        resumen_data['Ciclo critico (SOH<80%)'].append(ciclo_critico)
+        resumen_data['SOH en ciclo crítico (%)'].append(soh_critico)
+    
+    df_resumen = pd.DataFrame(resumen_data)
+    df_resumen.to_excel(writer, sheet_name='Resumen', index=False)
+
+# Mensaje aviso de la ruta del excel
+print("\n" + "-" * 50)
+print("Archivo excel creado en la carpeta del codigo")
+print(f"Ubicación: {ruta_script}")
+
 # ==========================================
+# 5. ESTADISTICAS 
 
-# Error absoluto: Ea = |y_analítica - y_numérica|
-error_absoluto = np.abs(V_analitica_array - V_euler)
+print("\n" + "-" * 50)
+print("ESTADÍSTICAS DESCRIPTIVAS POR TEMPERATURA")
+print("-" * 50)
 
-# Error porcentual: Ep = |(y_analítica - y_numérica)/y_analítica| * 100
-error_porcentual = np.abs((V_analitica_array - V_euler) / V_analitica_array) * 100
-
-# ==========================================
-# 4. TABLA DE RESULTADOS
-# ==========================================
-
-# Crear DataFrame con resultados
-df_resultados = pd.DataFrame({
-    'Ciclo (N)': N_euler.astype(int),
-    'V_analitica': V_analitica_array,
-    'V_Euler': V_euler,
-    'Error_Absoluto': error_absoluto,
-    'Error_Porcentual': error_porcentual
-})
-
-# Mostrar tabla completa
-print("=" * 80)
-print("RESULTADOS DEL MÉTODO DE EULER")
-print("=" * 80)
-print("\nTABLA COMPLETA:")
-print(df_resultados.to_string(index=False))
-
-# Mostrar estadísticas resumidas
-print("\n" + "=" * 80)
-print("ESTADÍSTICAS DE ERRORES")
-print("=" * 80)
-
-print(f"\nError Absoluto:")
-print(f"  Máximo: {np.max(error_absoluto):.6f} V")
-print(f"  Mínimo: {np.min(error_absoluto):.6f} V")
-print(f"  Promedio: {np.mean(error_absoluto):.6f} V")
-print(f"  En N=500: {error_absoluto[-1]:.6f} V")
-
-print(f"\nError Porcentual:")
-print(f"  Máximo: {np.max(error_porcentual):.4f}%")
-print(f"  Mínimo: {np.min(error_porcentual):.4f}%")
-print(f"  Promedio: {np.mean(error_porcentual):.4f}%")
-print(f"  En N=500: {error_porcentual[-1]:.4f}%")
-
-# ==========================================
-# 5. GUARDAR RESULTADOS EN CSV
-# ==========================================
-
-df_resultados.to_csv('resultados_euler.csv', index=False)
-print("\n Resultados guardados en 'resultados_euler.csv'")
+for T in temperaturas:
+    V = resultados[T]['V']
+    print(f"\nTemperatura {T}°C:")
+    print(f"  Voltaje inicial: {V[0]:.4f} V")
+    print(f"  Voltaje final (N=500): {V[-1]:.4f} V")
+    print(f"  Voltaje minimo: {np.min(V):.4f} V")
+    print(f"  Voltaje maximo: {np.max(V):.4f} V")
+    print(f"  Voltaje promedio: {np.mean(V):.4f} V")
+    print(f"  Desviacion estandar: {np.std(V):.4f} V")
+    print(f"  Degradacion total: {((V0 - V[-1]) / V0 * 100):.2f}%")
 
 # ==========================================
 # 6. GRÁFICAS
-# ==========================================
 
-plt.figure(figsize=(15, 10))
+plt.figure(figsize=(15, 12))
 
-# Gráfica 1: Comparación Euler vs Analítica
+# Gráfica 1: Comparación de temperaturas (voltaje)
 plt.subplot(2, 2, 1)
-plt.plot(N_euler, V_analitica_array, 'k-', linewidth=2, label='Solución Analítica')
-plt.plot(N_euler, V_euler, 'r--', linewidth=2, label='Método de Euler')
-plt.title('Comparación: Euler vs Solución Analítica')
-plt.xlabel('Número de Ciclos')
+colors = ['blue', 'orange', 'red']
+for i, T in enumerate(temperaturas):
+    plt.plot(resultados[T]['N'], resultados[T]['V'], 
+             color=colors[i], linewidth=2, label=f'{T}°C')
+plt.title('Degradacion del voltaje por temperatura')
+plt.xlabel('Numero de ciclos')
 plt.ylabel('Voltaje (V)')
 plt.legend()
 plt.grid(True)
 
-# Gráfica 2: Error Absoluto
+# Gráfica 2: Comparación de temperaturas (SOH - State of Health)
 plt.subplot(2, 2, 2)
-plt.plot(N_euler, error_absoluto, 'r-', linewidth=2)
-plt.title('Error Absoluto')
-plt.xlabel('Número de Ciclos')
-plt.ylabel('Error Absoluto (V)')
+for i, T in enumerate(temperaturas):
+    SOH = (resultados[T]['V'] / V0) * 100
+    plt.plot(resultados[T]['N'], SOH, 
+             color=colors[i], linewidth=2, label=f'{T}°C')
+plt.axhline(y=80, color='red', linestyle='--', linewidth=2, label='Límite Crítico (80%)')
+plt.title('Estado de salud (SOH) por temperatura')
+plt.xlabel('Numero de ciclos')
+plt.ylabel('SOH (%)')
+plt.legend()
 plt.grid(True)
 
-# Gráfica 3: Error Porcentual
+# Gráfica 3: Comparación de degradación
 plt.subplot(2, 2, 3)
-plt.plot(N_euler, error_porcentual, 'b-', linewidth=2)
-plt.title('Error Porcentual')
-plt.xlabel('Número de Ciclos')
-plt.ylabel('Error Porcentual (%)')
+for i, T in enumerate(temperaturas):
+    degradacion = ((V0 - resultados[T]['V']) / V0) * 100
+    plt.plot(resultados[T]['N'], degradacion, 
+             color=colors[i], linewidth=2, label=f'{T}°C')
+plt.title('Degradacion porcentual por temperatura')
+plt.xlabel('Numero de ciclos')
+plt.ylabel('Degradacion (%)')
+plt.legend()
 plt.grid(True)
 
 # Gráfica 4: Zoom en los primeros ciclos
 plt.subplot(2, 2, 4)
 zoom = 50  # Mostrar primeros 50 ciclos
-plt.plot(N_euler[:zoom], V_analitica_array[:zoom], 'k-', linewidth=2, label='Analítica')
-plt.plot(N_euler[:zoom], V_euler[:zoom], 'r--', linewidth=2, label='Euler')
+for i, T in enumerate(temperaturas):
+    plt.plot(resultados[T]['N'][:zoom], resultados[T]['V'][:zoom], 
+             color=colors[i], linewidth=2, label=f'{T}°C')
 plt.title(f'Zoom - Primeros {zoom} Ciclos')
-plt.xlabel('Número de Ciclos')
+plt.xlabel('Numero de ciclos')
 plt.ylabel('Voltaje (V)')
 plt.legend()
 plt.grid(True)
 
 plt.tight_layout()
 plt.show()
+
+# ==========================================
+# 7. ANÁLISIS DE PUNTOS CRÍTICOS
+
+print("\n" + "-" * 50)
+print("ANALISIS DE PUNTOS CRITICOS (SOH = 80%)")
+print("-" * 50)
+
+for T in temperaturas:
+    SOH = (resultados[T]['V'] / V0) * 100
+    # Encontrar el ciclo donde SOH cae por debajo de 80%
+    indices_criticos = np.where(SOH < 80)[0]
+    if len(indices_criticos) > 0:
+        ciclo_critico = indices_criticos[0]
+        print(f"\nTemperatura {T}°C:")
+        print(f"  Ciclo critico (SOH < 80%): {ciclo_critico}")
+        print(f"  SOH en ese punto: {SOH[ciclo_critico]:.2f}%")
+        print(f"  Voltaje en ese punto: {resultados[T]['V'][ciclo_critico]:.4f} V")
+    else:
+        print(f"\nTemperatura {T}°C:")
+        print(f"  No se alcanza el 80% de SOH en {ciclos_totales} ciclos")
+
+print("\n" + "-" * 50)
+print("Proceso finalizado")
+print("-" * 50)
